@@ -143,10 +143,17 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STORAGES_STATICFILES_BACKEND = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "local").lower()
-
-MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = f"/{STATIC_URL}media/"
+STATICFILES_DIRS = [
+    (str(Path("media") / "products"), MEDIA_ROOT / "products"),
+    (
+        str(Path("media") / "documents" / "covers"),
+        MEDIA_ROOT / "documents" / "covers",
+    ),
+]
+
+STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "local").lower()
 
 R2_ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID", "")
 R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID", "")

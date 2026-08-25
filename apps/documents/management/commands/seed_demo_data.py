@@ -76,6 +76,7 @@ class Command(BaseCommand):
         call_command("setup_datasheet_sections")
         call_command("generate_pdf_covers")
         call_command("import_named_covers", source_dir=str(self.source_dir))
+        call_command("link_bundled_covers")
 
         self.stdout.write(self.style.SUCCESS("Seed complete."))
 

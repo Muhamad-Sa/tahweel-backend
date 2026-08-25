@@ -12,9 +12,22 @@ __pycache__/
 
 # Local runtime data
 db.sqlite3
-media/
 staticfiles/
 *.log
+
+# Keep uploaded PDFs out of Git, but allow the lightweight bundled cover
+# images that are published through Django's static-file pipeline.
+media/*
+!media/products/
+!media/products/*.jpeg
+!media/products/*.jpg
+!media/products/*.png
+!media/documents/
+media/documents/*
+!media/documents/covers/
+!media/documents/covers/*.jpeg
+!media/documents/covers/*.jpg
+!media/documents/covers/*.png
 
 # Local tooling
 .vercel/

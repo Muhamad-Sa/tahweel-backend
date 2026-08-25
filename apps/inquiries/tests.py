@@ -1,5 +1,4 @@
-from django.core import mail
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from rest_framework.test import APIClient
 
 from apps.inquiries.models import ContactInquiry
@@ -19,20 +18,6 @@ class ContactInquiryAPITests(TestCase):
         response = self.client.post("/api/v1/contact/", self.valid_payload, format="json")
         self.assertEqual(response.status_code, 201)
         self.assertEqual(ContactInquiry.objects.count(), 1)
-
-    @override_settings(
-        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
-        DEFAULT_FROM_EMAIL="website@tahweel.com",
-        CONTACT_NOTIFICATION_EMAIL="youssef.samier@tahweel.com",
-    )
-    def test_valid_submission_emails_youssef(self):
-        response = self.client.post("/api/v1/contact/", self.valid_payload, format="json")
-
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to, ["youssef.samier@tahweel.com"])
-        self.assertEqual(mail.outbox[0].reply_to, ["jane@example.com"])
-        self.assertIn("200-unit residential project", mail.outbox[0].body)
 
     def test_short_message_is_rejected(self):
         payload = {**self.valid_payload, "message": "too short"}

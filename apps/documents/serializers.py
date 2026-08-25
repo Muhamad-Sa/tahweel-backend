@@ -22,6 +22,8 @@ class DocumentRevisionSerializer(serializers.ModelSerializer):
         ]
 
     def get_file_url(self, obj):
+        if obj.external_url:
+            return obj.external_url
         request = self.context.get("request")
         if not obj.file:
             return None

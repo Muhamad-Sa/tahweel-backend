@@ -137,7 +137,12 @@ class DocumentRevision(models.Model):
         null=True, blank=True,
         help_text="Auto-assigned on create (next integer for this document) -- leave blank.",
     )
-    file = models.FileField(upload_to=document_upload_path)
+    file = models.FileField(upload_to=document_upload_path, blank=True)
+    external_url = models.URLField(
+        max_length=1000,
+        blank=True,
+        help_text="Public URL for documents hosted outside Django storage, such as GitHub release assets.",
+    )
     storage_key = models.CharField(max_length=500, blank=True)
     original_filename = models.CharField(max_length=255, blank=True)
     file_size = models.PositiveBigIntegerField(default=0, help_text="Bytes")

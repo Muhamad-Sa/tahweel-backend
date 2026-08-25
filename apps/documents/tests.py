@@ -1,11 +1,13 @@
 from datetime import date
 
 from django.contrib.auth.models import User
+from django.core.management import call_command
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from rest_framework.test import APIClient
 
 from apps.documents.models import Document, DocumentRevision, DocumentType, RevisionStatus
+from apps.documents.management.commands.link_release_documents import RELEASE_DOCUMENTS
 from apps.products.models import Category
 
 
@@ -109,6 +111,29 @@ class DocumentAPITests(TestCase):
         self.assertIsNotNone(response.data["current_revision"])
         self.assertGreater(response.data["current_revision"]["file_size"], 0)
 
+    def test_external_revision_url_is_returned_without_local_file(self):
+        external_doc = Document.objects.create(
+            title="External Catalogue",
+            document_type=DocumentType.CATALOGUE,
+            active=True,
+            public=True,
+        )
+        external_url = "https://github.com/example/releases/download/documents-v1/catalogue.pdf"
+        DocumentRevision.objects.create(
+            document=external_doc,
+            revision="Published",
+            status=RevisionStatus.CURRENT,
+            external_url=external_url,
+            original_filename="catalogue.pdf",
+            file_size=1234,
+            mime_type="application/pdf",
+        )
+
+        response = self.client.get(f"/api/v1/documents/{external_doc.slug}/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["current_revision"]["file_url"], external_url)
+
     def test_filter_by_document_type(self):
         response = self.client.get("/api/v1/documents/?document_type=datasheet")
         self.assertEqual(response.status_code, 200)
@@ -155,3 +180,25 @@ class DocumentPermissionTests(TestCase):
 
         Req.user.is_staff = True
         self.assertTrue(perm.has_permission(Req(), None))
+
+
+class ReleaseDocumentLinkTests(TestCase):
+    def setUp(self):
+        for title, *_ in RELEASE_DOCUMENTS:
+            Document.objects.create(
+                title=title,
+                document_type=DocumentType.OTHER,
+                active=True,
+                public=True,
+            )
+
+    def test_links_all_release_assets_and_is_idempotent(self):
+        call_command("link_release_documents")
+        call_command("link_release_documents")
+
+        revisions = DocumentRevision.objects.filter(external_url__contains="/documents-v1/")
+        self.assertEqual(revisions.count(), len(RELEASE_DOCUMENTS))
+        self.assertEqual(DocumentRevision.objects.count(), len(RELEASE_DOCUMENTS))
+        self.assertTrue(all(revision.file_size > 0 for revision in revisions))
+        self.assertTrue(all(revision.checksum for revision in revisions))
+        self.assertTrue(all(document.current_revision_id for document in Document.objects.all()))

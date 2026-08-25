@@ -200,6 +200,27 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
 
 # ---------------------------------------------------------------------------
+# Contact-form email notifications
+# ---------------------------------------------------------------------------
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.smtp.EmailBackend"
+    if EMAIL_HOST
+    else "django.core.mail.backends.console.EmailBackend",
+)
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
+EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", 10))
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "web@tahweel.com")
+CONTACT_NOTIFICATION_EMAIL = os.environ.get(
+    "CONTACT_NOTIFICATION_EMAIL", "youssef.samier@tahweel.com"
+)
+
+# ---------------------------------------------------------------------------
 # DRF / JWT / OpenAPI
 # ---------------------------------------------------------------------------
 REST_FRAMEWORK = {

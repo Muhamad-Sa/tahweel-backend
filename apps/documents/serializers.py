@@ -43,13 +43,21 @@ class DocumentProductMiniSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     name = serializers.CharField()
     slug = serializers.CharField()
+    featured_image = serializers.SerializerMethodField()
+
+    def get_featured_image(self, obj):
+        if not obj.featured_image:
+            return None
+        request = self.context.get("request")
+        url = obj.featured_image.url
+        return request.build_absolute_uri(url) if request else url
 
 
 class DocumentListSerializer(serializers.ModelSerializer):
     current_revision = DocumentRevisionSerializer(read_only=True)
     category = CategoryMiniSerializer(read_only=True)
     section = DocumentSectionSerializer(read_only=True)
-    product = serializers.SerializerMethodField()
+    product = DocumentProductMiniSerializer(read_only=True)
 
     class Meta:
         model = Document
@@ -58,12 +66,6 @@ class DocumentListSerializer(serializers.ModelSerializer):
             "language", "category", "section", "product", "cover_image",
             "current_revision", "featured",
         ]
-
-    def get_product(self, obj):
-        if not obj.product_id:
-            return None
-        return {"id": obj.product_id, "name": obj.product.name, "slug": obj.product.slug}
-
 
 class DocumentDetailSerializer(DocumentListSerializer):
     standards = StandardSerializer(many=True, read_only=True)

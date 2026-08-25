@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 
 from apps.documents.models import Document, DocumentRevision, DocumentType, RevisionStatus
 from apps.documents.management.commands.link_release_documents import RELEASE_DOCUMENTS
-from apps.products.models import Category
+from apps.products.models import Category, Product
 
 
 def make_pdf(name="file.pdf", content=b"%PDF-1.4 test"):
@@ -110,6 +110,20 @@ class DocumentAPITests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(response.data["current_revision"])
         self.assertGreater(response.data["current_revision"]["file_size"], 0)
+
+    def test_linked_product_includes_featured_image(self):
+        product = Product.objects.create(
+            name="Drainage Product",
+            category=self.category,
+            featured_image="products/drainage-product.png",
+        )
+        self.public_doc.product = product
+        self.public_doc.save(update_fields=["product"])
+
+        response = self.client.get("/api/v1/documents/")
+
+        document = next(item for item in response.data["results"] if item["id"] == self.public_doc.id)
+        self.assertTrue(document["product"]["featured_image"].endswith("/static/media/products/drainage-product.png"))
 
     def test_external_revision_url_is_returned_without_local_file(self):
         external_doc = Document.objects.create(

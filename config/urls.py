@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -9,7 +10,19 @@ admin.site.site_header = "Tahweel Admin"
 admin.site.site_title = "Tahweel Admin"
 admin.site.index_title = "Content Management"
 
+
+def api_status(request):
+    return JsonResponse(
+        {
+            "service": "Tahweel API",
+            "status": "ok",
+            "documentation": "/api/v1/docs/",
+        }
+    )
+
+
 urlpatterns = [
+    path("", api_status, name="api-status"),
     path("admin/", admin.site.urls),
     path("api/v1/auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/v1/auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),

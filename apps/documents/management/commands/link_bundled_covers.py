@@ -8,6 +8,9 @@ from apps.products.models import Product
 
 
 IMAGE_EXTENSIONS = (".jpeg", ".jpg", ".png")
+PRODUCT_COVER_FALLBACKS = {
+    "tahweel-714-fitting": "tahweel-714-datasheet.png",
+}
 
 
 class Command(BaseCommand):
@@ -36,9 +39,18 @@ class Command(BaseCommand):
         linked = 0
         for product in Product.objects.all():
             image = self._find_image(folder, product.slug)
-            if image is None:
-                continue
-            name = f"products/{image.name}"
+            if image is not None:
+                name = f"products/{image.name}"
+            else:
+                fallback_name = PRODUCT_COVER_FALLBACKS.get(product.slug)
+                fallback = (
+                    Path(settings.MEDIA_ROOT) / "documents" / "covers" / fallback_name
+                    if fallback_name
+                    else None
+                )
+                if fallback is None or not fallback.is_file():
+                    continue
+                name = f"documents/covers/{fallback.name}"
             if product.featured_image.name != name:
                 product.featured_image.name = name
                 product.save(update_fields=["featured_image", "updated_at"])

@@ -66,3 +66,22 @@ class WaterSupplyProductCommandTests(TestCase):
         flange = Product.objects.get(name="Flange")
         self.assertEqual(flange.category, water_supply)
         self.assertIn("no standalone datasheet", flange.long_description.lower())
+
+
+class AdhesiveProductCommandTests(TestCase):
+    def test_command_adds_714_and_717_cements_and_is_idempotent(self):
+        call_command("recategorize_products", verbosity=0)
+        call_command("recategorize_products", verbosity=0)
+
+        adhesives = Category.objects.get(name="Tahweel Glue & Adhesives")
+        self.assertEqual(adhesives.products.count(), 2)
+
+        cpvc = Product.objects.get(slug="tahweel-714-fitting")
+        self.assertEqual(cpvc.name, "Tahweel 714 CPVC Cement")
+        self.assertEqual(cpvc.product_code, "TAH-714")
+        self.assertEqual(cpvc.category, adhesives)
+
+        pvc = Product.objects.get(slug="tahweel-717-pvc-cement")
+        self.assertEqual(pvc.name, "Tahweel 717 PVC Cement")
+        self.assertEqual(pvc.product_code, "TAH-717")
+        self.assertEqual(pvc.category, adhesives)

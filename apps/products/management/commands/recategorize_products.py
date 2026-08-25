@@ -29,7 +29,7 @@ NEW_CATEGORIES = [
         "Tahweel Glue & Adhesives",
         40,
         "Solvent cements and adhesives for pipe jointing.",
-        ["Tahweel 714 Fitting"],
+        ["Tahweel 714 CPVC Cement", "Tahweel 717 PVC Cement"],
     ),
     (
         "Sanitary Ware & Accessories",
@@ -42,36 +42,54 @@ NEW_CATEGORIES = [
     ),
 ]
 
-RENAMES = {
-    "Tahweel 714 Fitting": "Tahweel 714 Adhesive",
-}
+ADHESIVE_PRODUCTS = [
+    {
+        "slug": "tahweel-714-fitting",
+        "name": "Tahweel 714 CPVC Cement",
+        "product_code": "TAH-714",
+        "material": "CPVC solvent cement",
+        "application": "Heavy-bodied orange cement for CPVC pipes and fittings up to 12 inches",
+        "short_description": "Low-VOC, heavy-bodied orange CPVC solvent cement for joining CPVC pipes and fittings.",
+        "long_description": "Tahweel 714 is a heavy-bodied orange CPVC solvent cement for CPVC pipe and fitting joints. The supplied product label references ASTM F493.",
+        "country_of_origin": "United States",
+    },
+    {
+        "slug": "tahweel-717-pvc-cement",
+        "name": "Tahweel 717 PVC Cement",
+        "product_code": "TAH-717",
+        "material": "PVC solvent cement",
+        "application": "Heavy-bodied gray cement for PVC pipes and fittings up to 12 inches",
+        "short_description": "Low-VOC, heavy-bodied gray PVC solvent cement for joining PVC pipes and fittings.",
+        "long_description": "Tahweel 717 is a heavy-bodied gray PVC solvent cement for PVC pipe and fitting joints. The supplied product label references ASTM D2564.",
+        "country_of_origin": "United States",
+    },
+]
 
 RETIRE_IF_EMPTY = ["Drainage Systems", "Sanitary Fixtures & Valves"]
-
-MISSING_PRODUCTS = {
-    "Tahweel Glue & Adhesives": ["717 Adhesive"],
-}
-
 
 class Command(BaseCommand):
     help = "Reassign products into the curated catalogue taxonomy supplied by the client."
 
     def handle(self, *args, **options):
-        for old_name, new_name in RENAMES.items():
-            Product.objects.filter(name=old_name).update(name=new_name)
-
         for name, order, description, product_names in NEW_CATEGORIES:
             category, _ = Category.objects.update_or_create(
                 name=name, defaults={"display_order": order, "description": description, "active": True}
             )
+            if name == "Tahweel Glue & Adhesives":
+                for details in ADHESIVE_PRODUCTS:
+                    slug = details["slug"]
+                    Product.objects.update_or_create(
+                        slug=slug,
+                        defaults={**details, "category": category, "active": True},
+                    )
+
             moved = 0
             for pname in product_names:
-                actual_name = RENAMES.get(pname, pname)
-                updated = Product.objects.filter(name=actual_name).update(category=category)
+                updated = Product.objects.filter(name=pname).update(category=category)
                 if updated:
                     moved += 1
                 else:
-                    self.stdout.write(self.style.WARNING(f"  '{actual_name}' not found -- not moved into {name}"))
+                    self.stdout.write(self.style.WARNING(f"  '{pname}' not found -- not moved into {name}"))
 
             # Also repoint that product's documents' category badge to match.
             for product in Product.objects.filter(category=category):
@@ -91,6 +109,4 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(self.style.WARNING(f"{name} still has products -- not retired"))
 
-        self.stdout.write(self.style.SUCCESS("\nProducts not yet supplied:"))
-        for section, products in MISSING_PRODUCTS.items():
-            self.stdout.write(f"  {section}: {', '.join(products)}")
+        self.stdout.write(self.style.SUCCESS("\nCatalogue categories and supplied products are up to date."))

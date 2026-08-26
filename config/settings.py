@@ -144,7 +144,14 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STORAGES_STATICFILES_BACKEND = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_ROOT = BASE_DIR / "media"
-MEDIA_URL = "/media/"
+MEDIA_URL = f"/{STATIC_URL}media/"
+STATICFILES_DIRS = [
+    (str(Path("media") / "products"), MEDIA_ROOT / "products"),
+    (
+        str(Path("media") / "documents" / "covers"),
+        MEDIA_ROOT / "documents" / "covers",
+    ),
+]
 
 STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "local").lower()
 

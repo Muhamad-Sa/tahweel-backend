@@ -209,7 +209,9 @@ CORS_ALLOW_HEADERS = (*default_headers, "x-site-access")
 # the backend; never expose it through a VITE_* variable, which would embed it
 # in the public browser bundle.
 SITE_ACCESS_PASSCODE = os.environ.get("SITE_ACCESS_PASSCODE", "")
-SITE_ACCESS_TOKEN_MAX_AGE = int(os.environ.get("SITE_ACCESS_TOKEN_MAX_AGE", 60 * 60 * 12))
+SITE_ACCESS_TOKEN_MAX_AGE = int(
+    os.environ.get("SITE_ACCESS_TOKEN_MAX_AGE", "").strip() or 60 * 60 * 12
+)
 
 # ---------------------------------------------------------------------------
 # DRF / JWT / OpenAPI

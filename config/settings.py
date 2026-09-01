@@ -10,6 +10,7 @@ from pathlib import Path
 import os
 
 import dj_database_url
+from corsheaders.defaults import default_headers
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -58,6 +59,7 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "apps.accounts.middleware.SiteAccessMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -198,6 +200,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # CORS
 # ---------------------------------------------------------------------------
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+CORS_ALLOW_HEADERS = (*default_headers, "x-site-access")
+
+# ---------------------------------------------------------------------------
+# Site-wide passcode gate
+# ---------------------------------------------------------------------------
+# The gate is disabled when SITE_ACCESS_PASSCODE is blank. Keep this secret on
+# the backend; never expose it through a VITE_* variable, which would embed it
+# in the public browser bundle.
+SITE_ACCESS_PASSCODE = os.environ.get("SITE_ACCESS_PASSCODE", "")
+SITE_ACCESS_TOKEN_MAX_AGE = int(os.environ.get("SITE_ACCESS_TOKEN_MAX_AGE", 60 * 60 * 12))
 
 # ---------------------------------------------------------------------------
 # DRF / JWT / OpenAPI
@@ -219,6 +231,9 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
+    "DEFAULT_THROTTLE_RATES": {
+        "site_access": "10/minute",
+    },
 }
 
 SIMPLE_JWT = {
